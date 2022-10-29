@@ -1,5 +1,10 @@
 # CommandString/Pdo #
-Making PDO easier to use with the power of magic
+Making PDO easier with the power of magic
+
+[Class Reference](https://docs.cmdstr.dev/pdo)
+
+## Installation
+`composer require commandstring/pdo`
 
 ## Creating a connection
 ```php
@@ -17,7 +22,7 @@ $driver = (new Driver())
 $driver->query("SELECT * FROM table");
 $rows = $driver->fetchAll(PDO::FETCH_ASSOC);
 ```
-The driver will store the PDOStatement internally and detect if the method your invoking exists in PDOStatement or PDO and invoke the method on the instance accordingly. *Thankfully there's no method names that are the same between the two classes*
+The driver will store the PDOStatement internally and detect if the method your invoking exists in PDOStatement or PDO and invoke it whichever instance accordingly. *Thankfully there's no method names that are the same between the two classes*
 
 ## Preparing a statement
 ```php
@@ -28,7 +33,7 @@ $rows = $driver->fetchAll(PDO::FETCH_ASSOC);
 ```
 
 ## Singleton Constructor Argument
-If you construct a Driver with the singleton method as `true` then that new instance will be stored as a static property in the class that can be called from anywhere with the `get` method. You can additionally call PDO/PDOStatement methods statically from Driver and it will `get` pass the method call request to the instance stored internally.
+If you construct a Driver with the singleton argument as `true` then that new instance will be stored as a static property in the class that can be called from anywhere with the `get` method. You can additionally call PDO/PDOStatement methods statically from Driver and it will work similar to `$driver->methodName`
 ```php
 (new Driver(true))
 	->withUsername("root")
