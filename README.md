@@ -21,7 +21,7 @@ $driver = (new Driver())
 ```php
 $rows = $driver->query("SELECT * FROM table")->fetchAll(PDO::FETCH_ASSOC);
 ```
-The driver will store the PDOStatement internally and detect if the method your invoking exists in PDOStatement or PDO and invoke it whichever instance accordingly. *Thankfully there's no method names that are the same between the two classes*
+The driver will store the PDOStatement internally and detect if the method your invoking exists in PDOStatement or PDO and invoke it on one of the instances accordinly. *Thankfully there's no method names that are the same between the two classes*
 
 ## Preparing a statement
 ```php
