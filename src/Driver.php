@@ -128,7 +128,7 @@ class Driver {
      * 
      * @see https://www.php.net/manual/en/class.pdostatement.php
      */
-    public readonly PDOStatement $statement;
+    public PDOStatement $statement;
 
     /**
      * @var string $dsn The Data Source Name that holds information used to connect to the database
