@@ -7,6 +7,5 @@
         "psr-4": {
             "CommandString\\Pdo\\": "src/"
         }
-    },
-    "require": {}
+    }
 }
