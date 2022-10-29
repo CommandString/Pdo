@@ -113,7 +113,7 @@ use PDOStatement;
  * @method static self  withOptions(array $options)     Sets the options used when connecting to the database
  * @method static self  withDsn(string $dsn)            Sets the DSN used when connecting to the database
  * 
- * @property queryString returns row count from statement property
+ * @property string $queryString returns row count from statement property
  */
 class Driver {
     /**
