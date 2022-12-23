@@ -1,8 +1,6 @@
 # CommandString/Pdo #
 Making PDO easier with the power of magic
 
-[Class Reference](https://docs.cmdstr.dev/pdo)
-
 ## Installation
 `composer require commandstring/pdo`
 
