@@ -3,8 +3,10 @@
 namespace CommandString\Pdo;
 
 use Exception;
+use LogicException;
 use PDO;
 use PDOStatement;
+use stdClass;
 
 /**
  * @method bool                         beginTransaction()                                                                                          Initiates a transaction
@@ -99,23 +101,37 @@ use PDOStatement;
  *  
  * @method self         withUsername(string $username)  Sets the username used when connecting to the database
  * @method self         withPassword(string $password)  Sets the password used when connecting to the database
- * @method self         withDatabase(string $database)  Sets the database that is connected to
+ * @method self         withDatabase(string $database)  Sets the database that is connected to database
  * @method self         withHost(string $host)          Sets the host used when connecting to the database
  * @method self         withPort(int $port)             Sets the port used when connecting to the database
  * @method self         withOptions(array $options)     Sets the options used when connecting to the database
  * @method self         withDsn(string $dsn)            Sets the DSN used when connecting to the database
+ * @method self         withPrefix(string $prefix)      Sets the DNS used when connecting to the database
  * 
  * @method static self  withUsername(string $username)  Sets the username used when connecting to the database
  * @method static self  withPassword(string $password)  Sets the password used when connecting to the database
- * @method static self  withDatabase(string $database)  Sets the database that is connected to
+ * @method static self  withDbName(string $database)    Sets the database that is connected to the database
  * @method static self  withHost(string $host)          Sets the host used when connecting to the database
  * @method static self  withPort(int $port)             Sets the port used when connecting to the database
  * @method static self  withOptions(array $options)     Sets the options used when connecting to the database
  * @method static self  withDsn(string $dsn)            Sets the DSN used when connecting to the database
+ * @method static self  withPrefix(string $prefix)      Sets the prefix used when connecting to the database
  * 
  * @property string $queryString returns row count from statement property
  */
 class Driver {
+    public const PREFIX_MYSQL = "mysql";
+    public const PREFIX_POSTGRES = "pgsql";
+    public const PREFIX_CUBRID = "cubrid";
+    public const PREFIX_ORACLE = "oci";
+    public const PREFIX_SQLITE = "sqlite";
+    public const PREFIX_ODBC = "odbc";
+    public const PREFIX_IBM = "ibm";
+    public const PREFIX_MS_SQL = "sqlsrv";
+    public const PREFIX_MS_SQL_LIB = "sybase";
+    public const PREFIX_INFORMIX = "informix";
+    public const PREFIX_FIREBIRD = "firebird";
+
     /**
      * @var PDO $driver PDO's native driver
      * 
@@ -146,19 +162,14 @@ class Driver {
     private string $password;
 
     /**
-     * @var string $database The database name
+     * @var stdClass Stores properties used in the DSN
      */
-    private string $database;
+    private stdClass $dsn_props;
 
     /**
-     * @var string $host The host of the database
+     * @var string $prefix The database you're connecting to e.g. mysql, pgsql
      */
-    private string $host = "127.0.0.1";
-
-    /**
-     * @var int $port The port of the database
-     */
-    private int $port = 3306;
+    private string $prefix;
 
     /**
      * @var array $options Additional options for the connection
@@ -178,6 +189,8 @@ class Driver {
         if ($singleton) {
             self::$instance = $this;
         }
+
+        $this->dsn_props = new stdClass;
     }
 
     /**
@@ -188,10 +201,35 @@ class Driver {
     public function connect(): self
     {
         if (!isset($this->dsn)) {
-            $this->dsn = sprintf("mysql:host=%s;port=%d;dbname=%s;", $this->host, $this->port, $this->database);
+            $this->dsn = self::buildDsn($this->prefix, $this->dsn_props);
         }
 
-        $this->driver = new PDO($this->dsn, $this->username, $this->password, $this->options);
+        $this->driver = new PDO($this->dsn, $this->username ?? null, $this->password ?? null, $this->options);
+
+        return $this;
+    }
+
+    private static function buildDsn(string $prefix, stdClass|array $dsn_props) {
+        $dsn = "$prefix:";
+        foreach ($dsn_props as $name => $value) {
+            if (is_null($value)) {
+                continue;
+            }
+
+            $dsn .= "$name=$value;";
+        }
+
+        return $dsn;
+    }
+
+    /**
+     * @param string $prop
+     * @param mixed $value
+     * @return Driver
+     */
+    public function setDsnProp(string $prop, mixed $value): self
+    {
+        $this->dsn_props->$prop = $value;
 
         return $this;
     }
@@ -211,11 +249,14 @@ class Driver {
             $name = explode("with", $name)[1];
             $value = $args[0];
 
-            $properties = ["Username", "Password", "Database", "Host", "Port", "Options", "Dsn"];
+            $nonDSNProps = ["Options", "Dsn", "Prefix", "Username", "Password"];
 
-            if (in_array($name, $properties)) {
+            if (in_array($name, $nonDSNProps)) {
                 $name = strtolower($name);
                 $this->$name = $value;
+            } else {
+                $name = strtolower($name);
+                $this->setDsnProp($name, $value);
             }
         } else if (method_exists("PDO", $name) && isset($this->driver)) {
             $return = $this->driver->$name(...$args);
@@ -264,5 +305,78 @@ class Driver {
         }
 
         return self::$instance;
+    }
+
+    /**
+     * Create a driver fit to connect to a mysql database
+     * 
+     * **NOTE YOU HAVE TO INVOKE THE CONNECT METHOD YOURSELF!**
+     * @param string $username
+     * @param string $password
+     * @param string $dbname
+     * @param string $host
+     * @param string $port
+     * @param string|null $unix_socket
+     * @param string|null $charset
+     * @return Driver
+     */
+    public static function createMySqlDriver(
+        string $username,
+        string $password,
+        string $dbname,
+        string $host = "127.0.0.1",
+        int $port = 3306,
+        ?string $unix_socket = null,
+        ?string $charset = null
+    ): self
+    {
+        return (new self)
+            ->withDsn(
+                self::buildDsn(self::PREFIX_MYSQL, [
+                    "host" => $host,
+                    "port" => $port,
+                    "dbname" => $dbname,
+                    "unix_socket" => $unix_socket,
+                    "charset" => $charset
+                ])
+            )
+            ->withUsername($username)
+            ->withPassword($password)
+        ;
+    }
+
+    /**
+     * Creates a driver fit for connecting to a postgresql server
+     * 
+     * **NOTE YOU HAVE TO INVOKE THE CONNECT METHOD YOURSELF!**
+     * @param string $username
+     * @param string $password
+     * @param string $dbname
+     * @param string $host
+     * @param int $port
+     * @param string|null $sslMode
+     * @return Driver
+     */
+    public static function createPostgresSqlDriver(
+        string $username,
+        string $password,
+        string $dbname,
+        string $host = "127.0.0.1",
+        int $port = 5432,
+        ?string $sslMode = null
+    ): self
+    {
+        return (new self)
+            ->withDsn(
+                self::buildDsn(self::PREFIX_POSTGRES, [
+                    "host" => $host,
+                    "port" => $port,
+                    "dbname" => $dbname,
+                    "sslmode" => $sslMode
+                ])
+            )
+            ->withUsername($username)
+            ->withPassword($password)
+        ;
     }
 }
