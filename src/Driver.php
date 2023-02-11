@@ -401,4 +401,26 @@ class Driver {
             ->withPassword($password)
         ;
     }
+
+
+    /**
+     * Creates a driver fit for opening an SQLite database
+     * 
+     * **NOTE YOU HAVE TO INVOKE THE CONNECT METHOD YOURSELF!**
+     * @param string $db_path
+     * @return self
+     */
+    public static function createSQLiteDriver(string $dbPath): self
+    {
+        $driver = new self;
+        $path = realpath($dbPath);
+
+        if (!$path) {
+            throw new InvalidArgumentException("$dbPath is not an existing file");
+        }
+
+        $driver->dsn = self::PREFIX_SQLITE.":{$dbPath}";
+
+        return $driver;
+    }
 }
