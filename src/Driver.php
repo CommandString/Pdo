@@ -4,6 +4,7 @@ namespace CommandString\Pdo;
 
 use Exception;
 use LogicException;
+use InvalidArgumentException;
 use PDO;
 use PDOStatement;
 use stdClass;
