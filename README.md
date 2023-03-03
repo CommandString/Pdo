@@ -1,4 +1,6 @@
-# CommandString/Pdo #
+# This has been moved to [TNAPF](https://github.com/tnapf/pdo) and updates will no longer be made here
+
+# ~~CommandString/Pdo~~ #
 Making PDO easier with the power of magic
 
 ## Installation
